@@ -1,0 +1,43 @@
+pipeline {
+    agent any
+    tools {
+        maven 'localMaven'
+    }
+    stages {
+        stage('Clone Codebase') {
+            steps {
+                echo 'Clone GITHUB repos'
+                git 'https://github.com/LaurentArdiet/maven-project.git'
+            }
+        }
+        stage('Compile') {
+            steps {
+                echo 'Compilation'
+                withMaven(maven:'localMaven')
+                {
+                    bat "mvn compile"
+                }
+            }
+        }
+        stage('Test') {
+            steps {
+                echo 'Test'
+                withMaven(maven:'localMaven')
+                {
+                    bat "mvn test"
+                    // sh "mvn test"
+                }
+            }
+        }
+        stage('Analyse and send Results to Sonar') {
+            steps {
+                echo 'Analyse & Send Results'
+                withSonarQubeEnv(installationName:'localSonar', credentialsId: 'key4jenkins')
+                {
+                    bat "mvn -B -DskipTests clean package sonar:sonar"
+                    // sh "mvn -B -DskipTests clean package"
+                }
+            }
+        }
+    }
+}
